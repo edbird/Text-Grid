@@ -1,6 +1,9 @@
 
 
 
+#include <SDL2/sdl.h>
+
+
 #include <iostream>
 
 
@@ -9,6 +12,10 @@
 // text wrapping
 // the data inside text grid is filled using data from text buffer
 // when it is time to draw
+
+
+#include "version.hpp"
+
 
 #include "textgrid.hpp"
 #include "textbuffer.hpp"
@@ -108,6 +115,104 @@ void fillTextGridFromTextBuffer(TextGrid& textgrid, TextBuffer &textbuffer)
 
 int main(int argc, char *argv[])
 {
+
+    std::cout << "Version: " << textgrid_VERSION_MAJOR
+              << " " << textgrid_VERSION_MINOR << std::endl;
+
+    TextBuffer textbuffer();
+    textbuffer.ReadFile("README.md");
+
+    TextGrid textgrid(10, 10);
+
+    fillTextGridFromTextBuffer(textgrid, textbuffer);
+
+
+    // SDL stuff copied from TextGraphicsLib folder
+    
+    SDLManager &sdl_manager(SDLManager::getInstance());
+
+
+    // find a font file
+    const int FONT_FILENAME_BUFFER_SIZE = 4096;
+    char font_filename_buffer[FONT_FILENAME_BUFFER_SIZE];
+    fontConfigGetFontFilename(font_filename_buffer,
+        FONT_FILENAME_BUFFER_SIZE, "Liberation Mono");
+
+    std::string font_filename(font_filename_buffer); 
+    std::cout << "Matched font filename: " << font_filename << std::endl;
+
+
+    // open font with font texture manager
+    SDLFontTextureManager font_manager_liberation_mono(font_filename);
+
+    // TODO:
+    //
+    // font_manager_liberation_mono should either be allocated
+    // using a smart pointer (it should be a smart pointer)
+    // or the fonttexturemanager class should be a singleton
+    // which manages a set of shared pointers, one for each
+    // loaded font
+    //
+    // prefer to avoid singletons -
+    // therefore make the font_manager_liberatrion_mono a
+    // smart pointer or alternatively wrap the SDL_Texture
+    // for the font in its own class which manages the
+    // copying of the texture from the SDL_Texture to
+    // the SDL_Window SDL_Surface
+    //
+
+
+    // create SDL window
+    std::weak_ptr<SDL_Window> window = sdl_manager.CreateWindow();
+    std::shared_ptr<SDL_window> window_shared(window);
+
+    SDL_Renderer *renderer = window_shared->GetRenderer(); // TODO: ??
+
+    
+    // rendering code block
+    {
+
+
+        // continue to render stuff
+        SDL_Color COLOR_WHITE = SDL_Color(255, 255, 255);
+        SDL_Color COLOR_BACKGROUND = COLOR_WHITE;
+
+
+        //TextGrid textgrid(font_liberation_mono);
+        textgrid.SetFont(font_liberation_mono);
+        textgrid.Draw(window);
+
+        
+        // main infinite loop
+        for(bool quit = false; quit == false; )
+        {
+            
+
+
+            SDL_Event event;
+            while(SDL_PollEvent(&event) != 0)
+            {
+                if(event.type == SDL_QUIT)
+                {
+                    quit = true;
+                }
+                else
+                {
+                    // nothing
+                }
+            }
+
+
+
+            SDL_SetRenderDrawColor(renderer, COLOR_BACKGROUND);
+            SDL_RenderClear(renderer);
+
+
+            SDL_RenderPresent(renderer);
+        }
+
+    }
+
 
 
 
