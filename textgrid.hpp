@@ -36,6 +36,12 @@ class TextGrid
         fill();
     }
 
+
+    void Draw(const SDLWindow &sdlwindow); // probably can't be const
+
+    void SetFont(const SDLFontTextureManager &sdlfonttexturemanager);
+
+
     std::string GetBuffer() const
     {
         return m_text;
@@ -159,71 +165,109 @@ class TextGrid
 };
 
 
+// draw a single character, literally anywhere
+// (position not constrained by grid)
+void TextGrid::draw_char_anywhere(
+    const SDLWindow &sdlwindow,
+    const char c,
+    const int x, const int y)
+{
 
-                // rendering code copied from other project
+}
 
-                SDL_SetRenderDrawColor(renderer, COLOR_BACKGROUND);
-                SDL_RenderClear(renderer);
 
-                //SDL_Rect rsrc = map_text_chars_rect.at()
 
-                int text_texture_w = 0;
-                int text_texture_h = 0;
-                if(SDL_QueryTexture(text_texture, nullptr, nullptr,
-                    &text_texture_w, &text_texture_h) != 0)
+// draw a single character from the grid
+void TextGrid::draw_char(
+    const SDLWindow &sdlwindow,
+    const char c,
+    const unsigned int pos_x,
+    const unsigned int pos_y)
+{
+
+    // only works for monospace fonts
+    int y = pos_y * font_baseline_skip?
+    int x = pos_x * char_width?
+
+
+
+}
+
+
+
+
+#include <SDL2/SDL.h>
+
+
+void TextGrid::Draw(const SDLWindow &sdlwindow)
+{
+
+    // TODO: what is the best way to do this with smart pointer?
+    SDL_Renderer *renderer = sdlwindow.GetRenderer();
+
+
+    // rendering code copied from other project
+    //SDL_Rect rsrc = map_text_chars_rect.at()
+
+    int text_texture_w = 0;
+    int text_texture_h = 0;
+    if(SDL_QueryTexture(text_texture, nullptr, nullptr,
+        &text_texture_w, &text_texture_h) != 0)
+    {
+        std::cout << SDL_GetError() << std::endl;
+    }
+    else
+    {
+        // query was ok
+        // draw whole character texture block
+        int rdst_y = 0;
+
+        SDL_Rect rsrc;
+        rsrc.x = 0;
+        rsrc.y = 0;
+        rsrc.w = text_texture_w;
+        rsrc.h = text_texture_h;
+        SDL_Rect rdst(0, rdst_y, text_texture_w, text_texture_h);
+        SDL_Color COLOR_GREEN(0, 255, 0);
+        SDL_SetRenderDrawColor(renderer, COLOR_GREEN);
+        SDL_RenderFillRect(renderer, &rdst);
+        SDL_RenderCopy(renderer, text_texture, &rsrc, &rdst);
+
+        // draw arbitary strings
+        //rdst_y += text_line_skip;
+        //rdst.y = rdst_y;
+        rdst.x = 0;
+        rdst.y += text_line_skip;
+
+        std::string mytext("hello world 0123456789'''");
+        int ticktock = 0;
+        for(char c: mytext)
+        {
+            int offset_x = 0;
+            int index = index_of_printable_char(c);
+            if(index >= 0)
+            {
+                for(int count = 0;
+                    count < index;
+                    ++ count)
                 {
-                    std::cout << SDL_GetError() << std::endl;
+                    //rsrc_x += map_text_chars_rect.at(c).w;
+                    offset_x += map_text_chars_advance.at(c);
                 }
-                else
-                {
-                    // query was ok
-                    // draw whole character texture block
-                    int rdst_y = 0;
+                rsrc.x = map_text_chars_rect.at(c).x + offset_x;
+                //rsrc.y = map_text_chars_rect.at(c).y;
+            const int maxy = map_text_chars_rect.at(c).h + map_text_chars_rect.at(c).y; // TODO: remove?
+                rsrc.y = text_ascent - maxy;
+                //rsrc.y = text_texture_h - map_text_chars_rect.at(c).y;
+                rdst.w = rsrc.w = map_text_chars_rect.at(c).w;
+                rdst.h = rsrc.h = map_text_chars_rect.at(c).h;
 
-                    SDL_Rect rsrc;
-                    rsrc.x = 0;
-                    rsrc.y = 0;
-                    rsrc.w = text_texture_w;
-                    rsrc.h = text_texture_h;
-                    SDL_Rect rdst(0, rdst_y, text_texture_w, text_texture_h);
-                    SDL_Color COLOR_GREEN(0, 255, 0);
-                    SDL_SetRenderDrawColor(renderer, COLOR_GREEN);
-                    SDL_RenderFillRect(renderer, &rdst);
-                    SDL_RenderCopy(renderer, text_texture, &rsrc, &rdst);
+                //rdst.y += rsrc.y;
+                //const int maxy = map_text_chars_rect.at(c).h + map_text_chars_rect.at(c).y;
+                rdst.y += text_ascent - maxy;
+                rdst.x += map_text_chars_rect.at(c).x;
 
-                    // draw arbitary strings
-                    //rdst_y += text_line_skip;
-                    //rdst.y = rdst_y;
-                    rdst.x = 0;
-                    rdst.y += text_line_skip;
-
-                    std::string mytext("hello world 0123456789'''");
-                    int ticktock = 0;
-                    for(char c: mytext)
-                    {
-                        int offset_x = 0;
-                        int index = index_of_printable_char(c);
-                        if(index >= 0)
-                        {
-                            for(int count = 0;
-                                count < index;
-                                ++ count)
-                            {
-                                //rsrc_x += map_text_chars_rect.at(c).w;
-                                offset_x += map_text_chars_advance.at(c);
-                            }
-                            rsrc.x = map_text_chars_rect.at(c).x + offset_x;
-                            //rsrc.y = map_text_chars_rect.at(c).y;
-                        const int maxy = map_text_chars_rect.at(c).h + map_text_chars_rect.at(c).y;
-                            rsrc.y = text_ascent - maxy;
-                            //rsrc.y = text_texture_h - map_text_chars_rect.at(c).y;
-                            rdst.w = rsrc.w = map_text_chars_rect.at(c).w;
-                            rdst.h = rsrc.h = map_text_chars_rect.at(c).h;
-
-                            //rdst.y += rsrc.y;
-                            //const int maxy = map_text_chars_rect.at(c).h + map_text_chars_rect.at(c).y;
-                            rdst.y += text_ascent - maxy;
-                            rdst.x += map_text_chars_rect.at(c).x;
+                // TODO: remove this block
                 if(ticktock == 0)
                 {
                     //SDL_Color COLOR_GREEN(0, 255, 0);
@@ -232,29 +276,35 @@ class TextGrid
                 }
                 ticktock += 1;
                 ticktock %= 2;
-                            SDL_RenderCopy(renderer, text_texture, &rsrc, &rdst);
-                            rdst.x -= map_text_chars_rect.at(c).x;
-                            rdst.y -= text_ascent - maxy;
-                            int advance = map_text_chars_advance.at(c);
-                            
-                            //rdst.y -= rsrc.y;
-                            
-                            rdst.x += advance;
-                            rdst.y += 0;
-                        }
-                        else
-                        {
-                            std::cout << "Error in index_of_printable_char" << std::endl;
-                        }
 
-                    }
-                }
+                SDL_RenderCopy(renderer, text_texture, &rsrc, &rdst);
+                rdst.x -= map_text_chars_rect.at(c).x;
+                rdst.y -= text_ascent - maxy;
+                int advance = map_text_chars_advance.at(c);
+                
+                //rdst.y -= rsrc.y;
+                
+                rdst.x += advance;
+                rdst.y += 0;
+            }
+            else
+            {
+                std::cout << "Error in index_of_printable_char" << std::endl;
+            }
 
-
-
+        }
+    }
 
 
+}
 
+
+
+
+void TextGrid::SetFont(const SDLFontTextureManager &sdlfonttexturemanager)
+{
+
+}
 
 
 
