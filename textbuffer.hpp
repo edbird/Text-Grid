@@ -3,6 +3,9 @@
 
 
 
+#include "textgrid.hpp"
+
+
 #include <string>
 #include <vector>
 #include <fstream>
