@@ -2,7 +2,14 @@
 #define TEXTGRID_HPP
 
 
+#include <SDL2/SDL.h>
+
+#include "sdlfonttexturemanager.hpp"
+
+
 #include <string>
+
+
 
 
 class TextBuffer;
@@ -37,7 +44,7 @@ class TextGrid
     }
 
 
-    void Draw(const SDLWindow &sdlwindow); // probably can't be const
+    void Draw(const SDL_Window &sdlwindow); // probably can't be const
 
     void SetFont(const SDLFontTextureManager &sdlfonttexturemanager);
 
@@ -87,6 +94,7 @@ class TextGrid
         {
             std::string emsg(std::string("Error: index out of bounds in function ") + std::string(__func__));
             throw emsg;
+            // TODO: do not throw instance of std string
         }
         c = m_text[index(x, y)];
     }
@@ -156,6 +164,19 @@ class TextGrid
         }
     }
 
+    void draw_char_anywhere(
+        const SDL_Window &sdlwindow,
+        const char c,
+        const int x, const int y);
+
+    void draw_char(
+        const SDL_Window &sdlwindow,
+        const char c,
+        const unsigned int pos_x,
+        const unsigned int pos_y);
+
+
+
     unsigned int m_size_x;
     unsigned int m_size_y;
     std::string m_text;
@@ -168,7 +189,7 @@ class TextGrid
 // draw a single character, literally anywhere
 // (position not constrained by grid)
 void TextGrid::draw_char_anywhere(
-    const SDLWindow &sdlwindow,
+    const SDL_Window &sdlwindow,
     const char c,
     const int x, const int y)
 {
@@ -179,15 +200,15 @@ void TextGrid::draw_char_anywhere(
 
 // draw a single character from the grid
 void TextGrid::draw_char(
-    const SDLWindow &sdlwindow,
+    const SDL_Window &sdlwindow,
     const char c,
     const unsigned int pos_x,
     const unsigned int pos_y)
 {
 
     // only works for monospace fonts
-    int y = pos_y * font_baseline_skip?
-    int x = pos_x * char_width?
+    //int y = pos_y * font_baseline_skip?
+    //int x = pos_x * char_width?
 
 
 
@@ -196,10 +217,9 @@ void TextGrid::draw_char(
 
 
 
-#include <SDL2/SDL.h>
 
 
-void TextGrid::Draw(const SDLWindow &sdlwindow)
+void TextGrid::Draw(const SDL_Window &sdlwindow)
 {
 
     // TODO: what is the best way to do this with smart pointer?
@@ -297,6 +317,8 @@ void TextGrid::Draw(const SDLWindow &sdlwindow)
 
 
 }
+// TODO: Remove this function? This should be covered by some of my code
+// in the textgraphics lib folder?
 
 
 
