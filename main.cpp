@@ -1,7 +1,7 @@
 
 
 
-#include <SDL2/sdl.h>
+#include <SDL2/SDL.h>
 
 
 #include <iostream>
@@ -20,6 +20,8 @@
 #include "textgrid.hpp"
 #include "textbuffer.hpp"
 
+
+#include "sdlhelper.hpp"
 
 
 
