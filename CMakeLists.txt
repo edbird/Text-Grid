@@ -23,7 +23,7 @@ target_include_directories(textgraphicslib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # build the executable test program last
 set(SOURCE_FILES main.cpp)
 add_executable(textgridexe ${SOURCE_FILES})
-target_link_libraries(textgrid ${SDL2_LIBRARIES} ${SDL2TTF_LIBRARY})
+target_link_libraries(textgridexe ${SDL2_LIBRARIES} ${SDL2TTF_LIBRARY})
 
 configure_file(version.hpp.in version.hpp)
-target_include_directories(textgrid PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(textgridexe PUBLIC "${PROJECT_BINARY_DIR}")
