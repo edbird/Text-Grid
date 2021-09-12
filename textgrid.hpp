@@ -36,11 +36,74 @@ class TextGrid
 
     public:
 
-    TextGrid(unsigned int size_x, unsigned int size_y)
+    TextGrid(unsigned int size_x, unsigned int size_y,
+        std::shared_ptr<SDLFontManager> font)
+
+        // NOTE: The above is a shared pointer but the below does not use a
+        // shared pointer, does the code in main() use a shared pointer
+        // to reference the font data?
+        // No it doesn't: Calls to function write() pass the font
+        // as a const SDLFontManger& 
+        // the SDLFontTextureManager is then obtained by calling
+        // sdlfontmanager.m_sdlfonttexturemanager
+        // this returns a shared pointer.
+        // It may be more logical to pass the shared pointer to the
+        // write() function directly, which would allow this function
+        // to take a shared pointer as an argument. However, this raises
+        // the question: What is the purpose of a SDLFontManager?
+        // Why has it been separated from the SDLFontTextureManager
+        // when the SDLFontTextureManager should contain all the data
+        // required for drawing the font texture to screen? This includes
+        // elements such as the base line skip and font ascent.
+        // Perhaps the SDLFontManager should be responsible for loading
+        // multiple fonts? (Instances of SDLFontTexture manager) and
+        // the SDLFontTextureManager can then be passed as a shared pointer.
+        //
+        // A pointer could be made from the SDLFontTextureManager instance
+        // itself, to do this, and to make it a shared pointer, it would
+        // have to be constructed as a shared pointer (using new called by
+        // shared pointer construction). Otherwise, if the address is taken,
+        // then in principle, the shared pointer could be left dangling.
+        // (This is not how you use a shared pointer.)
+        // However this would require changing everything in main to use
+        // pointer syntax and referene the SDLFontTexutreManager instance
+        // as a pointer. This might be an acceptable solution.
+        // The alternative would be for the FontManger to manage a shared
+        // pointer to the FontTextureManager, but this might have its own
+        // disadvantages. Check main() to see.
+
         : m_size_x(size_x)
         , m_size_y(size_y)
     {
         fill();
+
+        // create a font to use here
+        std::cout << "loading font" << std::endl;
+
+        SDLFontManager font_manager_liberation_mono;
+        try
+        {
+            // create font texture
+            SDLFontManager font_manager_liberation_mono_local(
+                sdl_manager,
+                //std::shared_ptr<SDL_Renderer>(renderer),
+                renderer,
+                font_filename,
+                12);
+
+            font_manager_liberation_mono =
+                std::move(font_manager_liberation_mono_local);
+        }
+        catch(const SDLLibException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+        catch(const std::exception &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+
+        
     }
 
 
@@ -229,6 +292,10 @@ void TextGrid::Draw(const SDL_Window &sdlwindow)
     // rendering code copied from other project
     //SDL_Rect rsrc = map_text_chars_rect.at()
 
+
+    // the following section draws a complete block of text containing
+    // all rendered chars
+
     int text_texture_w = 0;
     int text_texture_h = 0;
     if(SDL_QueryTexture(text_texture, nullptr, nullptr,
@@ -252,6 +319,15 @@ void TextGrid::Draw(const SDL_Window &sdlwindow)
         SDL_SetRenderDrawColor(renderer, COLOR_GREEN);
         SDL_RenderFillRect(renderer, &rdst);
         SDL_RenderCopy(renderer, text_texture, &rsrc, &rdst);
+
+        // block ends here
+
+
+
+        // this block draws some arbitrary strings
+        // this is some old code which was inherited from
+        // the Text-Graphics-Lib project before I modified 
+        // the API for that project.
 
         // draw arbitary strings
         //rdst_y += text_line_skip;
@@ -325,7 +401,8 @@ void TextGrid::Draw(const SDL_Window &sdlwindow)
 
 void TextGrid::SetFont(const SDLFontTextureManager &sdlfonttexturemanager)
 {
-
+    // TODO: Can't fill this in until the design decisions on how t
+    // Draw the object have been made
 }
 
 

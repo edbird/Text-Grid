@@ -165,10 +165,15 @@ int main(int argc, char *argv[])
 
 
     // create SDL window
-    std::weak_ptr<SDL_Window> window = sdl_manager.CreateWindow();
-    std::shared_ptr<SDL_window> window_shared(window);
+    //std::shared_ptr<SDL_Window> window = sdl_manager.CreateWindow();
 
-    SDL_Renderer *renderer = window_shared->GetRenderer(); // TODO: ??
+    //std::shared_ptr<SDL_Renderer> renderer = window->GetRenderer(); // TODO: ??
+
+    std::shared_ptr<SDL_Window> window(
+        sdl_resource_manager.CreateWindow(sdl_manager));
+
+    std::shared_ptr<SDL_Renderer> renderer(
+        sdl_resource_manager.GetWindowRenderer());
 
     
     // rendering code block
@@ -180,9 +185,36 @@ int main(int argc, char *argv[])
         SDL_Color COLOR_BACKGROUND = COLOR_WHITE;
 
 
+        // copied from main.cpp in Text-Graphics-Lib
+        SDLFontManager font_manager_liberation_mono;
+        try
+        {
+            // create font texture
+            SDLFontManager font_manager_liberation_mono_local(
+                sdl_manager,
+                //std::shared_ptr<SDL_Renderer>(renderer),
+                renderer,
+                font_filename,
+                12);
+
+            font_manager_liberation_mono =
+                std::move(font_manager_liberation_mono_local);
+        }
+        catch(const SDLLibException &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+        catch(const std::exception &e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+
+
+
         //TextGrid textgrid(font_liberation_mono);
-        textgrid.SetFont(font_liberation_mono);
-        textgrid.Draw(window);
+        //textgrid.SetFont(font_liberation_mono);
+        textgrid.SetFont(font_manager_liberation_mono);
+        //textgrid.Draw(window);
 
         
         // main infinite loop
@@ -209,6 +241,7 @@ int main(int argc, char *argv[])
             SDL_SetRenderDrawColor(renderer, COLOR_BACKGROUND);
             SDL_RenderClear(renderer);
 
+            textgrid.Draw(window);
 
             SDL_RenderPresent(renderer);
         }
