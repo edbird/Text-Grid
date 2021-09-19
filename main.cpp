@@ -73,8 +73,11 @@ void fillTextGridFromTextBuffer(TextGrid& textgrid, TextBuffer &textbuffer)
                     (textbuffer_wrap_line_count < scroll_pos + size_y))
                 {
                     unsigned int delta = textbuffer_wrap_line_count - scroll_pos;
+                    std::cout << "delta=" << delta << std::endl;
 
                     std::string substring = textbuffer.m_lines.at(ix).substr(i, size_x);
+
+                    std::cout << "substring=" << substring << std::endl;
 
                     textgrid.PutString(0, delta, substring); // out of bounds ok
 
@@ -206,8 +209,19 @@ int main(int argc, char *argv[])
     TextGrid textgrid(10, 10, font_texture_liberation_mono);
     //textgrid.SetFont(font_texture_liberation_mono);
 
-    fillTextGridFromTextBuffer(textgrid, textbuffer);
+    // TODO: removed this to test base functions
+    //fillTextGridFromTextBuffer(textgrid, textbuffer);
     
+
+    textgrid.Put(0, 0, '0');
+    textgrid.Put(1, 0, '1');
+    textgrid.Put(2, 0, '2');
+    textgrid.Put(3, 0, '3');
+    textgrid.Put(4, 0, '4');
+
+    textgrid.Put(4, 4, 'X');
+    textgrid.PutString(4, 0, "sho");
+
 
     /*
     // find a font file
@@ -268,7 +282,7 @@ int main(int argc, char *argv[])
 
         textgrid.Print(std::cout);
         
-        
+
         // main infinite loop
         for(bool quit = false; quit == false; )
         {
