@@ -28,11 +28,22 @@ class TextBuffer
 
     void ReadFile(std::string filename)
     {
+        std::cout << __func__ << std::endl;
+
         std::ifstream ifs(filename);
-        std::string line;
-        while(std::getline(ifs, line))
+
+        if(!ifs.is_open())
         {
-            m_lines.emplace_back(std::move(line)); // TODO: check
+            std::cout << "Failed to open file " << filename << std::endl;
+        }
+        else
+        {
+            std::string line;
+            while(std::getline(ifs, line))
+            {
+                //std::cout << line << std::endl;
+                m_lines.emplace_back(std::move(line)); // TODO: check
+            }
         }
     }
 
@@ -70,7 +81,7 @@ class TextBuffer
     std::vector<std::size_t> m_cursor_pos;
     bool m_wrap;
     std::size_t m_scroll;
-    std::size_t m_scroll_h; // horrisontal scroll
+    std::size_t m_scroll_h; // horizontal scroll
 
 };
 
