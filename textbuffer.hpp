@@ -21,6 +21,9 @@ class TextBuffer
     public:
 
     TextBuffer()
+        : m_wrap(true) // TODO: just put these values in for testing
+        , m_scroll(0)
+        , m_scroll_h(0)
     {
 
     }
