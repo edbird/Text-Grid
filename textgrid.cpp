@@ -62,14 +62,29 @@ void TextGrid::Draw(std::shared_ptr<SDL_Renderer> sdlrenderer)
     int t_pos_y = pos_y;
 
     // TODO: don't expect this to render as expected
-    for(char c: m_text)
+
+    std::size_t index(0);
+    for(auto c: m_text)
     {
+        std::cout << index << " > " << c << std::endl;
+
+        // TODO: remove above?
+        t_pos_x = 10 * (index % m_size_x);
+        t_pos_y = 10 * (index / m_size_x);
+
+        if(t_pos_y >= m_size_y) break;
+
+        // TODO: what units does write take? pixels? I think
+        // so above calculations are wrong
+        // but rendered output is still unexpected
         write(
             sdlrenderer,
             m_sdlfonttexture,
-            c, t_pos_x, t_pos_y, true);
+            c, t_pos_x, t_pos_y, false);
 
         // TODO: implement the DrawCharacterAtPosition type of functions
+        
+        ++ index;
     }
 
 
