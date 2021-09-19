@@ -156,6 +156,8 @@ class TextGrid
             if(x < m_size_x)
             {
                 m_text[index(x, y)] = c;
+
+                std::cout << "m_text[" << x << "," << y << "]=" << c << std::endl;
             }
         }
     }
@@ -163,6 +165,7 @@ class TextGrid
     // wrapping/non-wrapping PutString function
     void PutString(unsigned int x, unsigned int y, std::string s, bool wrap = true)
     {
+        std::cout << __func__ << " s=" << s << std::endl;
         if(wrap)
         {
             put_string_wrap(x, y, s);
@@ -237,13 +240,18 @@ class TextGrid
     // wrapping PutString function
     void put_string_wrap(unsigned int x, unsigned int y, std::string s)
     {
+        std::cout << __func__ << std::endl;
+
         unsigned int pos_x = x;
         unsigned int pos_y = y;
         for(auto it{s.cbegin()}; it != s.cend(); ++ it)
         {
             char c = *it;
+
+            std::cout << "Put(" << pos_x << "," << pos_y << "," << c << ")" << std::endl;
+
             Put(pos_x, pos_y, c);
-            increment(x, y);
+            increment(pos_x, pos_y);
             if(y >= m_size_y)
             {
                 break;
