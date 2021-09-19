@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "sdlfonttexturemanager.hpp"
+#include "sdlfonttexture.hpp"
 
 
 #include <string>
@@ -37,48 +37,65 @@ class TextGrid
     public:
 
     TextGrid(unsigned int size_x, unsigned int size_y,
-        std::shared_ptr<SDLFontManager> font)
+        std::shared_ptr<SDLFontTexture> sdlfonttexture)
 
         // NOTE: The above is a shared pointer but the below does not use a
         // shared pointer, does the code in main() use a shared pointer
         // to reference the font data?
         // No it doesn't: Calls to function write() pass the font
         // as a const SDLFontManger& 
-        // the SDLFontTextureManager is then obtained by calling
+        // the SDLFontTexture is then obtained by calling
         // sdlfontmanager.m_sdlfonttexturemanager
         // this returns a shared pointer.
         // It may be more logical to pass the shared pointer to the
         // write() function directly, which would allow this function
         // to take a shared pointer as an argument. However, this raises
         // the question: What is the purpose of a SDLFontManager?
-        // Why has it been separated from the SDLFontTextureManager
-        // when the SDLFontTextureManager should contain all the data
+        // Why has it been separated from the SDLFontTexture
+        // when the SDLFontTexture should contain all the data
         // required for drawing the font texture to screen? This includes
         // elements such as the base line skip and font ascent.
         // Perhaps the SDLFontManager should be responsible for loading
         // multiple fonts? (Instances of SDLFontTexture manager) and
-        // the SDLFontTextureManager can then be passed as a shared pointer.
+        // the SDLFontTexture can then be passed as a shared pointer.
         //
-        // A pointer could be made from the SDLFontTextureManager instance
-        // itself, to do this, and to make it a shared pointer, it would
-        // have to be constructed as a shared pointer (using new called by
-        // shared pointer construction). Otherwise, if the address is taken,
-        // then in principle, the shared pointer could be left dangling.
-        // (This is not how you use a shared pointer.)
-        // However this would require changing everything in main to use
-        // pointer syntax and referene the SDLFontTexutreManager instance
-        // as a pointer. This might be an acceptable solution.
+        // NOTE: this has now been implemented:
+        // [X] SetFont function will now use shared pointer
+        // [X] calls to write() pass font as a shared pointer
+        // [X] SDLFontTexture instance no longer requires another
+        //     level of indirection to obtain
+        // [X] SDLFontManager now separated from SDLFontTexture
+        //     because it can load multiple fonts of different
+        //     font sizes
+        // [X] SDLFontTexture contains all data for rendering
+        //
+        // IGNORE: A pointer could be made from the SDLFontTexture instance
+        // IGNORE: itself, to do this, and to make it a shared pointer, it would
+        // IGNORE: have to be constructed as a shared pointer (using new called by
+        // IGNORE: shared pointer construction). Otherwise, if the address is taken,
+        // IGNORE: then in principle, the shared pointer could be left dangling.
+        // IGNORE: (This is not how you use a shared pointer.)
+        // IGNORE: However this would require changing everything in main to use
+        // IGNORE: pointer syntax and referene the SDLFontTexutreManager instance
+        // IGNORE: as a pointer. This might be an acceptable solution.
         // The alternative would be for the FontManger to manage a shared
         // pointer to the FontTextureManager, but this might have its own
         // disadvantages. Check main() to see.
+        // NOTE: latter comment accepted as solution
+        //
+        // This question may be resolved by considering how I want to
+        // use the FontTextureManager and FontManager when passing these
+        // objects to other methods.
+        // DONE
 
         : m_size_x(size_x)
         , m_size_y(size_y)
+        , m_sdlfonttexture(sdlfonttexture)
     {
         fill();
 
         // create a font to use here
-        std::cout << "loading font" << std::endl;
+        /*std::cout << "loading font" << std::endl;
 
         SDLFontManager font_manager_liberation_mono;
         try
@@ -102,14 +119,20 @@ class TextGrid
         {
             std::cout << e.what() << std::endl;
         }
-
+        */
         
     }
 
 
-    void Draw(const SDL_Window &sdlwindow); // probably can't be const
+    //void Draw(std::shared_ptr<SDL_Window> sdlwindow);
+    void Draw(std::shared_ptr<SDL_Renderer> sdlrenderer);
+        // probably can't be const
 
-    void SetFont(const SDLFontTextureManager &sdlfonttexturemanager);
+    // Same as above but prints to stdout
+    void Print(std::ostream &os);
+
+
+    void SetFont(std::shared_ptr<SDLFontTexture> sdlfonttexture);
 
 
     std::string GetBuffer() const
@@ -181,6 +204,7 @@ class TextGrid
         }
     }
 
+    // TODO: should really be called clear_and_fill() or just clear()
     void fill()
     {
         m_text.clear();
@@ -228,66 +252,46 @@ class TextGrid
     }
 
     void draw_char_anywhere(
-        const SDL_Window &sdlwindow,
+        std::shared_ptr<SDL_Window> sdlwindow,
         const char c,
         const int x, const int y);
 
     void draw_char(
-        const SDL_Window &sdlwindow,
+        std::shared_ptr<SDL_Window> sdlwindow,
         const char c,
         const unsigned int pos_x,
         const unsigned int pos_y);
 
 
+    private:
 
     unsigned int m_size_x;
     unsigned int m_size_y;
-    std::string m_text;
 
+    std::shared_ptr<SDLFontTexture> m_sdlfonttexture;
+
+    std::string m_text;
 
 
 };
 
 
-// draw a single character, literally anywhere
-// (position not constrained by grid)
-void TextGrid::draw_char_anywhere(
-    const SDL_Window &sdlwindow,
-    const char c,
-    const int x, const int y)
-{
-
-}
-
-
-
-// draw a single character from the grid
-void TextGrid::draw_char(
-    const SDL_Window &sdlwindow,
-    const char c,
-    const unsigned int pos_x,
-    const unsigned int pos_y)
-{
-
-    // only works for monospace fonts
-    //int y = pos_y * font_baseline_skip?
-    //int x = pos_x * char_width?
-
-
-
-}
 
 
 
 
 
 
-void TextGrid::Draw(const SDL_Window &sdlwindow)
+
+
+
+#if 0
+void TextGrid::Draw(std::shared_ptr<SDL_Window> sdlwindow)
 {
 
     // TODO: what is the best way to do this with smart pointer?
-    SDL_Renderer *renderer = sdlwindow.GetRenderer();
-
+    SDL_Renderer *renderer = sdlwindow->GetRenderer();
+    // TODO: is this different to my code in main() of Text-Graphics-Lib
 
     // rendering code copied from other project
     //SDL_Rect rsrc = map_text_chars_rect.at()
@@ -393,17 +397,14 @@ void TextGrid::Draw(const SDL_Window &sdlwindow)
 
 
 }
+#endif
 // TODO: Remove this function? This should be covered by some of my code
 // in the textgraphics lib folder?
 
 
 
 
-void TextGrid::SetFont(const SDLFontTextureManager &sdlfonttexturemanager)
-{
-    // TODO: Can't fill this in until the design decisions on how t
-    // Draw the object have been made
-}
+
 
 
 
