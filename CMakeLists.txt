@@ -22,7 +22,7 @@ include_directories(textgrid ../Text-Graphics-Lib ${SDL2_INCLUDE_DIRS} ${SDL2TTF
 include_directories(textgraphicslib ../Text-Graphics-Lib ${SDL2_INCLUDE_DIRS} ${SDL2TTF_INCLUDE_DIR})
     # TODO: need a better way of managing these files: cmake set source directory or something similar?
 
-set(SOURCE_FILES main.cpp textgrid_print.cpp textgrid.cpp)
+set(SOURCE_FILES main.cpp textgrid_print.cpp textgrid.cpp filltextgridfromtextbuffer.cpp)
 set(TEXTGRAPHICSLIB_SOURCE_FILES ../Text-Graphics-Lib/fc_helper.cpp ../Text-Graphics-Lib/sdlfontmanager.cpp ../Text-Graphics-Lib/sdlfontmanager_fontmanagerinitsuccess.cpp ../Text-Graphics-Lib/sdlfonttexture.cpp ../Text-Graphics-Lib/sdlhelper.cpp ../Text-Graphics-Lib/tty_write_functions.cpp)
 #set(TEXTGRAPHICSLIB_SOURCE_FILES fc_helper.cpp sdlfontmanager.cpp sdlfontmanager_fontmanagerinitsuccess.cpp sdlfonttexture.cpp sdlhelper.cpp tty_write_functions.cpp)
 
