@@ -155,17 +155,20 @@ class TextGrid
         {
             if(x < m_size_x)
             {
+                //std::cout << "index(" << x << "," << y << ")=" << index(x, y) << std::endl;
                 m_text[index(x, y)] = c;
 
-                std::cout << "m_text[" << x << "," << y << "]=" << c << std::endl;
+                //std::cout << "m_text[" << x << "," << y << "]=" << c << std::endl;
             }
         }
+        //std::cin.get();
+        // TODO: remove
     }
 
     // wrapping/non-wrapping PutString function
     void PutString(unsigned int x, unsigned int y, std::string s, bool wrap = true)
     {
-        std::cout << __func__ << " s=" << s << std::endl;
+        //std::cout << __func__ << " s=" << s << std::endl;
         if(wrap)
         {
             put_string_wrap(x, y, s);
@@ -214,6 +217,10 @@ class TextGrid
 
         // fill text grid with spaces
         unsigned int count = m_size_x * m_size_y;
+
+        //std::cout << "fill() called, count=" << count << std::endl;
+        //std::cin.get(); // TODO remove
+
         for(unsigned int i = 0; i < count; ++ i)
         {
             m_text.push_back(' ');
@@ -237,10 +244,12 @@ class TextGrid
         }
     }
 
+    // TODO: I don't think this function works correctly
+
     // wrapping PutString function
     void put_string_wrap(unsigned int x, unsigned int y, std::string s)
     {
-        std::cout << __func__ << std::endl;
+        //std::cout << __func__ << std::endl;
 
         unsigned int pos_x = x;
         unsigned int pos_y = y;
@@ -248,7 +257,7 @@ class TextGrid
         {
             char c = *it;
 
-            std::cout << "Put(" << pos_x << "," << pos_y << "," << c << ")" << std::endl;
+            //std::cout << "Put(" << pos_x << "," << pos_y << "," << c << ")" << std::endl;
 
             Put(pos_x, pos_y, c);
             increment(pos_x, pos_y);
@@ -259,11 +268,15 @@ class TextGrid
         }
     }
 
+    // TODO: implement these ?
     void draw_char_anywhere(
         std::shared_ptr<SDL_Window> sdlwindow,
         const char c,
         const int x, const int y);
 
+    // this function cannot be easily implemented because it
+    // requires knowing the advance of each character which had been
+    // printed before it on the same line
     void draw_char(
         std::shared_ptr<SDL_Window> sdlwindow,
         const char c,
