@@ -59,20 +59,29 @@ void TextGrid::Draw(std::shared_ptr<SDL_Renderer> sdlrenderer)
     int pos_x = 0;
     int pos_y = 0;
     int t_pos_x = pos_x;
-    int t_pos_y = pos_y;
+    //int t_pos_y = pos_y; // (A)
 
     // TODO: don't expect this to render as expected
 
     std::size_t index(0);
     for(auto c: m_text)
     {
-        std::cout << index << " > " << c << std::endl;
+        //std::cout << index << " > " << c << std::endl;
+        // TODO: remove
 
-        // TODO: remove above?
-        t_pos_x = 10 * (index % m_size_x);
-        t_pos_y = 10 * (index / m_size_x);
+        const int t_index_x = (index % m_size_x);
+        const int t_index_y = (index / m_size_x);
 
-        if(t_pos_y >= m_size_y) break;
+        // TODO: remove above? (A)
+        //t_pos_x = 6 * t_index_x;
+        const int t_pos_y = pos_y + font_line_skip * t_index_y;
+
+        if(t_index_x == 0)
+        {
+            t_pos_x = pos_x;
+        }
+
+        if(t_index_y >= m_size_y) break;
 
         // TODO: what units does write take? pixels? I think
         // so above calculations are wrong
@@ -80,7 +89,7 @@ void TextGrid::Draw(std::shared_ptr<SDL_Renderer> sdlrenderer)
         write(
             sdlrenderer,
             m_sdlfonttexture,
-            c, t_pos_x, t_pos_y, false);
+            c, t_pos_x, t_pos_y, true);
 
         // TODO: implement the DrawCharacterAtPosition type of functions
         

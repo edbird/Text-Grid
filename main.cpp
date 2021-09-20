@@ -213,14 +213,20 @@ int main(int argc, char *argv[])
     //fillTextGridFromTextBuffer(textgrid, textbuffer);
     
 
+    // TODO: need to change the X and Y around so the indices
+    // are row, column
     textgrid.Put(0, 0, '0');
     textgrid.Put(1, 0, '1');
     textgrid.Put(2, 0, '2');
     textgrid.Put(3, 0, '3');
     textgrid.Put(4, 0, '4');
 
+    textgrid.PutString(0, 1, "hello wor.");
+    textgrid.PutString(0, 2, "hello world");
+    textgrid.PutString(0, 3, "hello world");
+
     textgrid.Put(4, 4, 'X');
-    textgrid.PutString(4, 0, "sho");
+    textgrid.PutString(0, 4, "sho");
 
 
     /*
