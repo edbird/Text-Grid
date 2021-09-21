@@ -4,6 +4,8 @@
 
 #include <SDL2/SDL.h>
 
+#include "color.hpp"
+
 #include "sdlfonttexture.hpp"
 
 
@@ -37,6 +39,7 @@ class TextGrid
     public:
 
     TextGrid(unsigned int size_x, unsigned int size_y,
+        const int size_pixels_x, const int size_pixels_y,
         std::shared_ptr<SDLFontTexture> sdlfonttexture)
 
         // NOTE: The above is a shared pointer but the below does not use a
@@ -90,7 +93,10 @@ class TextGrid
 
         : m_size_x(size_x)
         , m_size_y(size_y)
+        , m_size_pixels_x(size_pixels_x)
+        , m_size_pixels_y(size_pixels_y)
         , m_sdlfonttexture(sdlfonttexture)
+        , m_background_color(COLOR_WHITE)
     {
         fill();
 
@@ -124,9 +130,19 @@ class TextGrid
     }
 
 
+    void SetBackgroundColor(const SDL_Color background_color)
+    {
+        m_background_color = background_color;
+    }
+
+
     //void Draw(std::shared_ptr<SDL_Window> sdlwindow);
     void Draw(std::shared_ptr<SDL_Renderer> sdlrenderer);
         // probably can't be const
+
+    void Draw_PixelSize(
+        std::shared_ptr<SDL_Renderer> sdlrenderer);
+    // maybe can be const since sdlrenderer is the non-const object?
 
     // Same as above but prints to stdout
     void Print(std::ostream &os);
@@ -289,10 +305,14 @@ class TextGrid
     unsigned int m_size_x;
     unsigned int m_size_y;
 
+    int m_size_pixels_x;
+    int m_size_pixels_y;
+
     std::shared_ptr<SDLFontTexture> m_sdlfonttexture;
 
     std::string m_text;
 
+    SDL_Color m_background_color;
 
 };
 
