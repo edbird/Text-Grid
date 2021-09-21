@@ -116,7 +116,10 @@ int main(int argc, char *argv[])
 
     // TODO: this constructor call makes the SetFont function
     // redundant
-    TextGrid textgrid(40, 20, font_texture_liberation_mono);
+    //TextGrid textgrid(40, 20, font_texture_liberation_mono);
+    TextGrid textgrid(40, 20, 200, 200, font_texture_liberation_mono);
+    SDL_Color COLOR_TEXTGRID_BACKGROUND = SDL_MakeColor(200, 200, 200);
+    textgrid.SetBackgroundColor(COLOR_TEXTGRID_BACKGROUND);
     //textgrid.SetFont(font_texture_liberation_mono);
 
     // here is a potential problem:
@@ -234,7 +237,8 @@ int main(int argc, char *argv[])
             SDL_SetRenderDrawColor(renderer.get(), COLOR_BACKGROUND);
             SDL_RenderClear(renderer.get());
 
-            textgrid.Draw(renderer);
+            //textgrid.Draw(renderer);
+            textgrid.Draw_PixelSize(renderer);
 
             SDL_RenderPresent(renderer.get());
         }
