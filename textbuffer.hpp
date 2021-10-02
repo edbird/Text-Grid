@@ -25,7 +25,7 @@ class TextBuffer
         , m_scroll(0)
         , m_scroll_h(0)
     {
-
+        m_cursor_pos.push_back(std::make_pair(0, 0));
     }
 
 
@@ -81,7 +81,7 @@ class TextBuffer
 
 
     std::vector<std::string> m_lines;
-    std::vector<std::size_t> m_cursor_pos;
+    std::vector<std::pair<std::size_t, std::size_t>> m_cursor_pos; // can have more than one
     bool m_wrap;
     std::size_t m_scroll;
     std::size_t m_scroll_h; // horizontal scroll

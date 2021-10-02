@@ -13,6 +13,8 @@
 
 
 
+#include "cursortype.hpp"
+
 
 class TextBuffer;
 
@@ -129,6 +131,7 @@ class TextGrid
         , m_character_size_y(0)
         , m_sdlfonttexture(sdlfonttexture)
         , m_background_color(COLOR_WHITE)
+        , m_cursortype{cursortype_t::BLOCK}
     {
         m_character_size_x = sdlfonttexture->GetWidestCharacterAdvance();
         m_character_size_y = sdlfonttexture->GetFontLineSkip();
@@ -406,6 +409,24 @@ class TextGrid
     std::string m_text;
 
     SDL_Color m_background_color;
+
+    // Note: could inherit and create a new class which has cursors,
+    // but for now we simply insert cursor variables and logic into
+    // this monolithic class
+    // TODO: initialize in class constructor and add setter function for cursortype
+    cursortype_t m_cursortype;
+    unsigned int m_cursor_pos_x;
+    unsigned int m_cursor_pos_y;
+
+    // in order for the cursor logic to work, we need to remember the size
+    // of each line in the grid.
+    // currently the grid is always populated with characters, some of which
+    // are just blank spaces by default
+    // should perhaps solve this by making the cursor a member of the text
+    // buffer class?
+    // or creating a new class which holds the textgrid data, but as individual
+    // lines, and this class can then render the textgrid by creating a new
+    // object from the class used to hold the textgrid data?
 
 };
 
