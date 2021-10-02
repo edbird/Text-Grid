@@ -29,6 +29,30 @@ class TextBuffer;
 // to this class and pass in instance of this class
 // and a font as arguments
 //
+
+
+// have a think about fixed width vs variable width fonts:
+//
+// this class was designed with the intention of storing the characters
+// to be printed as a grid of characters
+//
+// therefore it was not intended to be used with variable width fonts
+//
+// the constructor used to take an x * y number of characters to hold in
+// the grid
+//
+// this is a bit strange when considering printing of the characters
+// to screen
+//
+// usually, an x * y pixel resolution would be expected instead
+//
+// therefore construct class with an x * y pixel resolution and convert
+// this into an x * y character grid size. use the pixel resolution to draw
+// the background, and use the x * y grid size to draw the characters themselves
+//
+// if someone uses a non-fixed width font then the grid will not be drawn
+// sensibly
+
 class TextGrid
 {
 
@@ -38,6 +62,12 @@ class TextGrid
 
     public:
 
+    // this constructor uses a character grid size of size_x * size_y
+    // to initialize the grid. the size_pixels_x is set manually
+    // by the user. this means that a nonsense value of the pixel size
+    // can be supplied, the consequence is that the background colored
+    // square can be a size which doesn't correspond to the area where
+    // characters are printed
     TextGrid(unsigned int size_x, unsigned int size_y,
         const int size_pixels_x, const int size_pixels_y,
         std::shared_ptr<SDLFontTexture> sdlfonttexture)
@@ -95,9 +125,17 @@ class TextGrid
         , m_size_y(size_y)
         , m_size_pixels_x(size_pixels_x)
         , m_size_pixels_y(size_pixels_y)
+        , m_character_size_x(0)
+        , m_character_size_y(0)
         , m_sdlfonttexture(sdlfonttexture)
         , m_background_color(COLOR_WHITE)
     {
+        m_character_size_x = sdlfonttexture->GetWidestCharacterAdvance();
+        m_character_size_y = sdlfonttexture->GetFontLineSkip();
+
+        // this constructor is weird, and does not auto-calculate
+        // the character grid size, size x and y
+
         fill();
 
         // create a font to use here
@@ -130,6 +168,52 @@ class TextGrid
     }
 
 
+    // this version of the constructor sets the pixel size of the 
+    // textgrid object. this is the size of the background square
+    // which will be drawn
+    // the actual size of the grid in characters is computed from
+    // the pixel size
+    TextGrid(
+        const int size_pixels_x, const int size_pixels_y,
+        std::shared_ptr<SDLFontTexture> sdlfonttexture)
+        : m_size_x(0)
+        , m_size_y(0)
+        , m_size_pixels_x(size_pixels_x)
+        , m_size_pixels_y(size_pixels_y)
+        , m_character_size_x(0)
+        , m_character_size_y(0)
+        , m_sdlfonttexture(sdlfonttexture)
+        , m_background_color(COLOR_WHITE)
+    {
+        // set the grid size in characters
+        const int font_line_skip = sdlfonttexture->GetFontLineSkip();
+        const int widest_character_width = sdlfonttexture->GetWidestCharacterWidth();
+        const int widest_character_advance = sdlfonttexture->GetWidestCharacterAdvance();
+
+        std::cout << "Widest Character Advance: " << widest_character_advance << std::endl;
+        std::cout << "Widest Character Width: " << widest_character_width << std::endl;
+
+        std::cout << "W Character Width " << sdlfonttexture->GetCharacterWidthW() << std::endl;
+        std::cout << "W Character Advance " << sdlfonttexture->GetCharacterAdvanceW() << std::endl;
+
+        std::cout << "_ Character Width " << sdlfonttexture->GetCharacterWidthUnderscore() << std::endl;
+        std::cout << "_ Character Advance " << sdlfonttexture->GetCharacterAdvanceUnderscore() << std::endl;
+
+        const int character_size_x = widest_character_advance;
+        const int character_size_y = font_line_skip;
+
+        // store these for later calculations
+        m_character_size_x = character_size_x;
+        m_character_size_y = character_size_y;
+        
+        // truncate rounding (round down)
+        m_size_x = size_pixels_x / character_size_x;
+        m_size_y = size_pixels_y / character_size_y;
+
+        // fill with blank characters (' ', space)
+        fill();
+    }
+
     void SetBackgroundColor(const SDL_Color background_color)
     {
         m_background_color = background_color;
@@ -144,7 +228,7 @@ class TextGrid
         std::shared_ptr<SDL_Renderer> sdlrenderer);
     // maybe can be const since sdlrenderer is the non-const object?
 
-    // Same as above but prints to stdout
+    // Same as above but prints to stdout TODO
     void Print(std::ostream &os);
 
 
@@ -156,13 +240,21 @@ class TextGrid
         return m_text;
     }
 
+    void SetSizePixels(const int size_pixels_x, const int size_pixels_y);
+
     // sets size to zero and clears buffer
+    // note this function is a bit weird because it sets the size
+    // of the grid directly, so removed it
+    /*
     void Clear(unsigned int size_x, unsigned int size_y)
     {
         m_size_x = size_x;
         m_size_y = size_y;
         fill();
     }
+    */
+
+    void Clear();
 
     // silently ignores out of bounds character put request
     void Put(unsigned int x, unsigned int y, char c)
@@ -227,21 +319,7 @@ class TextGrid
     }
 
     // TODO: should really be called clear_and_fill() or just clear()
-    void fill()
-    {
-        m_text.clear();
-
-        // fill text grid with spaces
-        unsigned int count = m_size_x * m_size_y;
-
-        //std::cout << "fill() called, count=" << count << std::endl;
-        //std::cin.get(); // TODO remove
-
-        for(unsigned int i = 0; i < count; ++ i)
-        {
-            m_text.push_back(' ');
-        }
-    }
+    void fill();
 
     // non-wrapping PutString function
     void put_string_no_wrap(unsigned int x, unsigned int y, std::string s)
@@ -302,11 +380,26 @@ class TextGrid
 
     private:
 
+    // size in number of characters
+    // makes more sense for monospace fonts
+    // scales with font size
+    // these are being depreciated
     unsigned int m_size_x;
     unsigned int m_size_y;
 
+    // size in pixels
+    // makes sense for both monospace and
+    // variable width fonts
+    // does not scale with font size, independent of font size
+    // these are replacing m_size_x and m_size_y
     int m_size_pixels_x;
     int m_size_pixels_y;
+
+    // this class needs to store the font line skip (character size y)
+    // and widest character advance (character size x)
+    // this is to calculate the size x and y from the pixel size x and y
+    int m_character_size_x;
+    int m_character_size_y;
 
     std::shared_ptr<SDLFontTexture> m_sdlfonttexture;
 

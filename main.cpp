@@ -117,8 +117,13 @@ int main(int argc, char *argv[])
     // TODO: this constructor call makes the SetFont function
     // redundant
     //TextGrid textgrid(40, 20, font_texture_liberation_mono);
-    TextGrid textgrid(40, 20, 200, 200, font_texture_liberation_mono);
+    //TextGrid textgrid(40, 20, 200, 200, font_texture_liberation_mono);
+    int width = 0;
+    int height = 0;
+    SDL_GetWindowSize(window.get(), &width, &height);
+    TextGrid textgrid(width, height, font_texture_liberation_mono);
     SDL_Color COLOR_TEXTGRID_BACKGROUND = SDL_MakeColor(200, 200, 200);
+    //SDL_Color COLOR_TEXTGRID_BACKGROUND = SDL_MakeColor(0xFF, 0x00, 0x00);
     textgrid.SetBackgroundColor(COLOR_TEXTGRID_BACKGROUND);
     //textgrid.SetFont(font_texture_liberation_mono);
 
@@ -224,6 +229,38 @@ int main(int argc, char *argv[])
                 if(event.type == SDL_QUIT)
                 {
                     quit = true;
+                }
+                else if(event.type == SDL_WINDOWEVENT)
+                {
+                    if(event.window.event == SDL_WINDOWEVENT_RESIZED)
+                    {
+                        std::cout << "SDL_WINDOWEVENT_RESIZED" << std::endl;
+                        std::cout << event.window.windowID << " "
+                                  << event.window.data1 << " "
+                                  << event.window.data2 << std::endl;
+                    }
+                    
+                    // note: new if here, because both events seem to fire
+                    // simultaniously
+                    if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                    {
+                        std::cout << "SDL_WINDOWEVENT_SIZE_CHANGED" << std::endl;
+                        std::cout << event.window.windowID << " "
+                                  << event.window.data1 << " "
+                                  << event.window.data2 << std::endl;
+
+                        const int width = event.window.data1;
+                        const int height = event.window.data2;
+                        textgrid.SetSizePixels(width, height);
+
+                        // repopulate the textgrid
+                        // TODO: remove this?
+                        fillTextGridFromTextBuffer(textgrid, textbuffer);
+                    }
+                    else
+                    {
+                        // nothing ?
+                    }
                 }
                 else
                 {

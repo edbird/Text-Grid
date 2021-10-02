@@ -117,6 +117,13 @@ void TextGrid::Draw_PixelSize(std::shared_ptr<SDL_Renderer> sdlrenderer)
 //std::shared_ptr<SDL_Window> sdlwindow)
 {
 
+    /*
+    std::cout << "Filling rect: "
+              << 0 << " "
+              << 0 << " "
+              << m_size_pixels_x << " "
+              << m_size_pixels_y << " " << std::endl;*/
+
     SDL_Rect rdst{0, 0, m_size_pixels_x, m_size_pixels_y};
     SDL_SetRenderDrawColor(sdlrenderer.get(), m_background_color);
     SDL_RenderFillRect(sdlrenderer.get(), &rdst);
@@ -203,4 +210,87 @@ void TextGrid::SetFont(std::shared_ptr<SDLFontTexture> sdlfonttexture)
     // TODO: Can't fill this in until the design decisions on how t
     // Draw the object have been made
     m_sdlfonttexture = sdlfonttexture;
+
+    // need to set the grid size after changing font
+
+    const int widest_character_advance = sdlfonttexture->GetWidestCharacterAdvance();
+    const int font_line_skip = sdlfonttexture->GetFontLineSkip();
+
+    const int character_size_x = widest_character_advance;
+    const int character_size_y = font_line_skip;
+
+    // store these for later calculations
+    m_character_size_x = character_size_x;
+    m_character_size_y = character_size_y;
+
+    // truncate rounding (round down)
+    m_size_x = m_size_pixels_x / character_size_x;
+    m_size_y = m_size_pixels_y / character_size_y;
+
+    // fill with blank characters (' ', space)
+    // no logical way to truncate / expand the grid if
+    // the character dimensions (and thus grid size)
+    // changes
+    fill();
+
+}
+
+
+
+void TextGrid::SetSizePixels(const int size_pixels_x, const int size_pixels_y)
+{
+    m_size_pixels_x = size_pixels_x;
+    m_size_pixels_y = size_pixels_y;
+
+#if 0
+    // set the grid size in characters
+    const int font_line_skip = sdlfonttexture->GetFontLineSkip();
+    //const int widest_character_width = sdlfonttexture->GetWidestCharacterWidth();
+    const int widest_character_advance = sdlfonttexture->GetWidestCharacterAdvance();
+
+    const int character_size_x = widest_character_advance;
+    const int character_size_y = font_line_skip;
+
+    // store these for later calculations
+    m_character_size_x = character_size_x;
+    m_character_size_y = character_size_y;
+
+    // truncate rounding (round down)
+    m_size_x = size_pixels_x / character_size_x;
+    m_size_y = size_pixels_y / character_size_y;
+#endif
+
+    // truncate rounding (round down)
+    m_size_x = size_pixels_x / m_character_size_x;
+    m_size_y = size_pixels_y / m_character_size_y;
+
+    // there is no sensible way to crop or expand the textgrid
+    // because some lines may have been printed using a "wrap"
+    // mode
+    // it is expected that the user will re-populate the grid
+    // with characters after calling this function
+    fill();
+}
+
+
+void TextGrid::Clear()
+{
+    fill();
+}
+
+
+void TextGrid::fill()
+{
+    m_text.clear();
+
+    // fill text grid with spaces
+    unsigned int count = m_size_x * m_size_y;
+
+    //std::cout << "fill() called, count=" << count << std::endl;
+    //std::cin.get(); // TODO remove
+
+    for(unsigned int i = 0; i < count; ++ i)
+    {
+        m_text.push_back(' ');
+    }
 }
