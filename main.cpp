@@ -14,24 +14,24 @@
 // when it is time to draw
 
 
-#include "version.hpp"
+#include "version.h"
 
 
-#include "textgrid.hpp"
-#include "textbuffer.hpp"
+#include "TextArea.h"
+#include "TextBuffer.h"
 
 
 
 
-#include "sdlmanager.hpp"
-#include "sdlresourcemanager.hpp"
-#include "sdlfontmanager.hpp"
+#include "SDLManager.h"
+#include "SDLResourceMananger.h"
+#include "FontManager.h"
 
 
-#include "sdlhelper.hpp"
+#include "SDLHelper.h"
 
 
-#include "color.hpp"
+#include "Color.h"
 
 
 
@@ -47,49 +47,49 @@ int main(int argc, char *argv[])
     TextBuffer textbuffer;
     textbuffer.ReadFile("README.md");
 
-    // TextGrid moved below because it requires a SDLFontTexture
+    // TextArea moved below because it requires a SDLFontTexture
     // for initialization
     // TODO: move TextBuffer as well
 
 
     // SDL stuff copied from TextGraphicsLib folder
     
-    SDLManager &sdl_manager(SDLManager::getInstance());
+    SDLManager &sdlManager(SDLManager::getInstance());
 
-    SDLResourceManager sdl_resource_manager(sdl_manager);
+    SDLResourceManager sdlResourceManager(sdlManager);
 
 
 
     // create window and renderer - required to create font texture
     std::shared_ptr<SDL_Window> window(
-        //sdl_resource_manager.CreateWindow(sdl_manager));
-        sdl_resource_manager.CreateWindow());
+        //sdlResourceManager.CreateWindow(sdlManager));
+        sdlResourceManager.CreateWindow());
 
     std::shared_ptr<SDL_Renderer> renderer(
-        sdl_resource_manager.GetWindowRenderer());
+        sdlResourceManager.GetWindowRenderer());
 
 
 
     std::cout << "init font manager..." << std::endl;
-    SDLFontManager font_manager(sdl_manager);
+    FontManager fontManager(sdlManager);
     std::cout << "font manager initialized" << std::endl;
 
-    std::string font_filename_liberation_mono;
+    std::string fontFilenameLiberationMono;
     try
     {
-        std::string string_liberation_mono("Liberation Mono");
+        std::string stringLiberationMono("Liberation Mono");
 
-        std::string font_filename =
-            fontConfigGetFontFilename(string_liberation_mono);
-        std::cout << "font_filename=" << font_filename << std::endl;
+        std::string fontFilename =
+            fontConfigGetFontFilename(stringLiberationMono);
+        std::cout << "fontFilename=" << fontFilename << std::endl;
 
-        font_filename_liberation_mono = font_filename;
+        fontFilenameLiberationMono = fontFilename;
 
         // this function loads a font using the SDL TTF functions
         // taking a font filename (full path) as an argument.
         // The path to the font to be loaded is obtained from the fc
         // font config functions.
-        font_manager.LoadFontTexture(renderer, font_filename_liberation_mono, 12);
+        fontManager.LoadFontTexture(renderer, fontFilenameLiberationMono, 12);
     }
     catch(const SDLLibException &e)
     {
@@ -107,54 +107,54 @@ int main(int argc, char *argv[])
 
     // the to get the actual FontTexture
     // possibly the LoadFontTexture should return the same value
-    std::shared_ptr<SDLFontTexture> font_texture_liberation_mono =
-        font_manager.GetFontTexture(
-            font_filename_liberation_mono, 12);
+    std::shared_ptr<SDLFontTexture> fontTextureLiberationMono =
+        fontManager.GetFontTexture(
+            fontFilenameLiberationMono, 12);
         // return a shared pointer; good, can pass this to other
         // functions and classes
 
 
     // TODO: this constructor call makes the SetFont function
     // redundant
-    //TextGrid textgrid(40, 20, font_texture_liberation_mono);
-    //TextGrid textgrid(40, 20, 200, 200, font_texture_liberation_mono);
+    //TextArea textArea(40, 20, fontTextureLiberationMono);
+    //TextArea textArea(40, 20, 200, 200, fontTextureLiberationMono);
     int width = 0;
     int height = 0;
     SDL_GetWindowSize(window.get(), &width, &height);
-    TextGrid textgrid(width, height, font_texture_liberation_mono);
+    TextArea textArea(width, height, fontTextureLiberationMono);
     SDL_Color COLOR_TEXTGRID_BACKGROUND = SDL_MakeColor(200, 200, 200);
     //SDL_Color COLOR_TEXTGRID_BACKGROUND = SDL_MakeColor(0xFF, 0x00, 0x00);
-    textgrid.SetBackgroundColor(COLOR_TEXTGRID_BACKGROUND);
-    //textgrid.SetFont(font_texture_liberation_mono);
+    textArea.SetBackgroundColor(COLOR_TEXTGRID_BACKGROUND);
+    //textArea.SetFont(fontTextureLiberationMono);
 
     // here is a potential problem:
-    // the textgrid size is set assuming fixed width / monospace font
+    // the textArea size is set assuming fixed width / monospace font
     // the arguments are the number of characters in x and y
     // whereas in reality the arguments should be the pixel size of
-    // the drawable textgrid area
+    // the drawable textArea area
     // otherwise, when using different font sizes or non-monospace fonts
-    // the drawable area of the textgrid scales (changes) rather than
+    // the drawable area of the textArea scales (changes) rather than
     // remaining static
 
     // TODO: removed this to test base functions
-    fillTextGridFromTextBuffer(textgrid, textbuffer);
+    fillTextGridFromTextBuffer(textArea, textbuffer);
     
 
     // TODO: need to change the X and Y around so the indices
     // are row, column
     /*
-    textgrid.Put(0, 0, '0');
-    textgrid.Put(1, 0, '1');
-    textgrid.Put(2, 0, '2');
-    textgrid.Put(3, 0, '3');
-    textgrid.Put(4, 0, '4');
+    textArea.Put(0, 0, '0');
+    textArea.Put(1, 0, '1');
+    textArea.Put(2, 0, '2');
+    textArea.Put(3, 0, '3');
+    textArea.Put(4, 0, '4');
 
-    textgrid.PutString(0, 1, "hello wor.");
-    textgrid.PutString(0, 2, "hello world");
-    textgrid.PutString(0, 3, "hello world");
+    textArea.PutString(0, 1, "hello wor.");
+    textArea.PutString(0, 2, "hello world");
+    textArea.PutString(0, 3, "hello world");
 
-    textgrid.Put(4, 4, 'X');
-    textgrid.PutString(0, 4, "sho");
+    textArea.Put(4, 4, 'X');
+    textArea.PutString(0, 4, "sho");
     */
 
     /*
@@ -164,12 +164,12 @@ int main(int argc, char *argv[])
     fontConfigGetFontFilename(font_filename_buffer,
         FONT_FILENAME_BUFFER_SIZE, "Liberation Mono");
 
-    std::string font_filename(font_filename_buffer); 
-    std::cout << "Matched font filename: " << font_filename << std::endl;
+    std::string fontFilename(font_filename_buffer); 
+    std::cout << "Matched font filename: " << fontFilename << std::endl;
 
 
     // open font with font texture manager
-    SDLFontTexture font_manager_liberation_mono(font_filename);
+    SDLFontTexture font_manager_liberation_mono(fontFilename);
     */
 
     // TODO:
@@ -207,14 +207,14 @@ int main(int argc, char *argv[])
 
 
 
-        //TextGrid textgrid(font_liberation_mono);
-        //textgrid.SetFont(font_liberation_mono);
-        //textgrid.SetFont(font_manager_liberation_mono);
+        //TextArea textArea(font_liberation_mono);
+        //textArea.SetFont(font_liberation_mono);
+        //textArea.SetFont(font_manager_liberation_mono);
         // NOTE: moved
-        //textgrid.Draw(window);
+        //textArea.Draw(window);
 
 
-        textgrid.Print(std::cout);
+        textArea.Print(std::cout);
         
 
         // main infinite loop
@@ -251,11 +251,11 @@ int main(int argc, char *argv[])
 
                         const int width = event.window.data1;
                         const int height = event.window.data2;
-                        textgrid.SetSizePixels(width, height);
+                        textArea.SetSizePixels(width, height);
 
-                        // repopulate the textgrid
+                        // repopulate the textArea
                         // TODO: remove this?
-                        fillTextGridFromTextBuffer(textgrid, textbuffer);
+                        fillTextGridFromTextBuffer(textArea, textbuffer);
                     }
                     else
                     {
@@ -274,8 +274,8 @@ int main(int argc, char *argv[])
             SDL_SetRenderDrawColor(renderer.get(), COLOR_BACKGROUND);
             SDL_RenderClear(renderer.get());
 
-            //textgrid.Draw(renderer);
-            textgrid.Draw_PixelSize(renderer);
+            //textArea.Draw(renderer);
+            textArea.drawPixelSize(renderer);
 
             SDL_RenderPresent(renderer.get());
         }

@@ -1,26 +1,33 @@
-#ifndef TEXTGRID_HPP
-#define TEXTGRID_HPP
+#ifndef TEXTAREA_H
+#define TEXTAREA_H
+
+
+
+#include "Color.h"
+#include "FontTexture.h"
+#include "CursorType.h"
 
 
 #include <SDL2/SDL.h>
-
-#include "color.hpp"
-
-#include "sdlfonttexture.hpp"
 
 
 #include <string>
 
 
 
-#include "cursortype.hpp"
-
-
 class TextBuffer;
 
 
-// class to hold data for a fixed size text grid
-// essentially an N * M array of text characters
+// class to hold data for an area of text
+// the size of the text area is defined in
+// pixels and as much as possible of each
+// line of text is drawn. this varies depending
+// on the characters contained in each line
+// because they may have non-uniform widths
+// with non-monospace fonts.
+//
+// These comments more relevant to a terminal
+// emulator implementation:
 // Put methods ignore out of bounds
 // Get methods throw error on out of bounds
 //
@@ -55,91 +62,46 @@ class TextBuffer;
 // if someone uses a non-fixed width font then the grid will not be drawn
 // sensibly
 
-class TextGrid
+// A monospace TextArea is probably fundamentally different to a text grid
+// for a non-uniform width font. (Unless the data is stored in a textbuffer)
+
+// New implementation: Pass an x and y resolution in pixels. The font will
+// then be used to calculate how many characters can fix on each line
+
+class TextArea
 {
 
 
-    friend void fillTextGridFromTextBuffer(TextGrid& textgrid, TextBuffer &textbuffer);
+    friend void fillTextGridFromTextBuffer(TextArea& textArea, TextBuffer &textBuffer);
 
 
-    public:
+public:
 
     // this constructor uses a character grid size of size_x * size_y
-    // to initialize the grid. the size_pixels_x is set manually
+    // to initialize the grid. the sizePixelsX is set manually
     // by the user. this means that a nonsense value of the pixel size
     // can be supplied, the consequence is that the background colored
     // square can be a size which doesn't correspond to the area where
     // characters are printed
-    TextGrid(unsigned int size_x, unsigned int size_y,
-        const int size_pixels_x, const int size_pixels_y,
-        std::shared_ptr<SDLFontTexture> sdlfonttexture)
-
-        // NOTE: The above is a shared pointer but the below does not use a
-        // shared pointer, does the code in main() use a shared pointer
-        // to reference the font data?
-        // No it doesn't: Calls to function write() pass the font
-        // as a const SDLFontManger& 
-        // the SDLFontTexture is then obtained by calling
-        // sdlfontmanager.m_sdlfonttexturemanager
-        // this returns a shared pointer.
-        // It may be more logical to pass the shared pointer to the
-        // write() function directly, which would allow this function
-        // to take a shared pointer as an argument. However, this raises
-        // the question: What is the purpose of a SDLFontManager?
-        // Why has it been separated from the SDLFontTexture
-        // when the SDLFontTexture should contain all the data
-        // required for drawing the font texture to screen? This includes
-        // elements such as the base line skip and font ascent.
-        // Perhaps the SDLFontManager should be responsible for loading
-        // multiple fonts? (Instances of SDLFontTexture manager) and
-        // the SDLFontTexture can then be passed as a shared pointer.
-        //
-        // NOTE: this has now been implemented:
-        // [X] SetFont function will now use shared pointer
-        // [X] calls to write() pass font as a shared pointer
-        // [X] SDLFontTexture instance no longer requires another
-        //     level of indirection to obtain
-        // [X] SDLFontManager now separated from SDLFontTexture
-        //     because it can load multiple fonts of different
-        //     font sizes
-        // [X] SDLFontTexture contains all data for rendering
-        //
-        // IGNORE: A pointer could be made from the SDLFontTexture instance
-        // IGNORE: itself, to do this, and to make it a shared pointer, it would
-        // IGNORE: have to be constructed as a shared pointer (using new called by
-        // IGNORE: shared pointer construction). Otherwise, if the address is taken,
-        // IGNORE: then in principle, the shared pointer could be left dangling.
-        // IGNORE: (This is not how you use a shared pointer.)
-        // IGNORE: However this would require changing everything in main to use
-        // IGNORE: pointer syntax and referene the SDLFontTexutreManager instance
-        // IGNORE: as a pointer. This might be an acceptable solution.
-        // The alternative would be for the FontManger to manage a shared
-        // pointer to the FontTextureManager, but this might have its own
-        // disadvantages. Check main() to see.
-        // NOTE: latter comment accepted as solution
-        //
-        // This question may be resolved by considering how I want to
-        // use the FontTextureManager and FontManager when passing these
-        // objects to other methods.
-        // DONE
-
-        : m_size_x(size_x)
-        , m_size_y(size_y)
-        , m_size_pixels_x(size_pixels_x)
-        , m_size_pixels_y(size_pixels_y)
-        , m_character_size_x(0)
-        , m_character_size_y(0)
-        , m_sdlfonttexture(sdlfonttexture)
-        , m_background_color(COLOR_WHITE)
-        , m_cursortype{cursortype_t::BLOCK}
+    TextArea(   unsigned int size_x, unsigned int size_y,
+                const int sizePixelsX, const int sizePixelsY,
+                std::shared_ptr<FontTexture> fontTexture)
+        : mSizeX(size_x)
+        , mSizeY(size_y)
+        , mSizePixelsX(sizePixelsX)
+        , mSizePixelsY(sizePixelsY)
+        , mCharacterSizeX(0)
+        , mCharacterSizeY(0)
+        , mFontTexture(fontTexture)
+        , mBackgroundColor(COLOR_WHITE)
+        , mCursorType{cursortype_t::BLOCK}
     {
-        m_character_size_x = sdlfonttexture->GetWidestCharacterAdvance();
-        m_character_size_y = sdlfonttexture->GetFontLineSkip();
+        mCharacterSizeX = fontTexture->GetWidestCharacterAdvance();
+        mCharacterSizeY = fontTexture->GetFontLineSkip();
 
         // this constructor is weird, and does not auto-calculate
         // the character grid size, size x and y
 
-        fill();
 
         // create a font to use here
         /*std::cout << "loading font" << std::endl;
@@ -172,78 +134,78 @@ class TextGrid
 
 
     // this version of the constructor sets the pixel size of the 
-    // textgrid object. this is the size of the background square
+    // textArea object. this is the size of the background square
     // which will be drawn
     // the actual size of the grid in characters is computed from
     // the pixel size
-    TextGrid(
-        const int size_pixels_x, const int size_pixels_y,
-        std::shared_ptr<SDLFontTexture> sdlfonttexture)
-        : m_size_x(0)
-        , m_size_y(0)
-        , m_size_pixels_x(size_pixels_x)
-        , m_size_pixels_y(size_pixels_y)
-        , m_character_size_x(0)
-        , m_character_size_y(0)
-        , m_sdlfonttexture(sdlfonttexture)
-        , m_background_color(COLOR_WHITE)
+    TextArea(
+        const int sizePixelsX, const int sizePixelsY,
+        std::shared_ptr<SDLFontTexture> fontTexture)
+        : mSizeX(0)
+        , mSizeY(0)
+        , mSizePixelsX(sizePixelsX)
+        , mSizePixelsY(sizePixelsY)
+        , mCharacterSizeX(0)
+        , mCharacterSizeY(0)
+        , mFontTexture(fontTexture)
+        , mBackgroundColor(COLOR_WHITE)
     {
         // set the grid size in characters
-        const int font_line_skip = sdlfonttexture->GetFontLineSkip();
-        const int widest_character_width = sdlfonttexture->GetWidestCharacterWidth();
-        const int widest_character_advance = sdlfonttexture->GetWidestCharacterAdvance();
+        const int fontLineSkip = fontTexture->GetFontLineSkip();
+        const int widestCharacterWidth = fontTexture->GetWidestCharacterWidth();
+        const int widestCharacterAdvance = fontTexture->GetWidestCharacterAdvance();
 
-        std::cout << "Widest Character Advance: " << widest_character_advance << std::endl;
-        std::cout << "Widest Character Width: " << widest_character_width << std::endl;
+        std::cout << "Widest Character Advance: " << widestCharacterAdvance << std::endl;
+        std::cout << "Widest Character Width: " << widestCharacterWidth << std::endl;
 
-        std::cout << "W Character Width " << sdlfonttexture->GetCharacterWidthW() << std::endl;
-        std::cout << "W Character Advance " << sdlfonttexture->GetCharacterAdvanceW() << std::endl;
+        std::cout << "W Character Width " << fontTexture->GetCharacterWidthW() << std::endl;
+        std::cout << "W Character Advance " << fontTexture->GetCharacterAdvanceW() << std::endl;
 
-        std::cout << "_ Character Width " << sdlfonttexture->GetCharacterWidthUnderscore() << std::endl;
-        std::cout << "_ Character Advance " << sdlfonttexture->GetCharacterAdvanceUnderscore() << std::endl;
+        std::cout << "_ Character Width " << fontTexture->GetCharacterWidthUnderscore() << std::endl;
+        std::cout << "_ Character Advance " << fontTexture->GetCharacterAdvanceUnderscore() << std::endl;
 
-        const int character_size_x = widest_character_advance;
-        const int character_size_y = font_line_skip;
+        const int characterSizeX = widestCharacterAdvance;
+        const int characterSizeY = fontLineSkip;
 
         // store these for later calculations
-        m_character_size_x = character_size_x;
-        m_character_size_y = character_size_y;
+        mCharacterSizeX = characterSizeX;
+        mCharacterSizeY = characterSizeY;
         
         // truncate rounding (round down)
-        m_size_x = size_pixels_x / character_size_x;
-        m_size_y = size_pixels_y / character_size_y;
+        mSizeX = sizePixelsX / characterSizeX;
+        mSizeY = sizePixelsY / characterSizeY;
 
         // fill with blank characters (' ', space)
         fill();
     }
 
-    void SetBackgroundColor(const SDL_Color background_color)
+    void setBackgroundColor(const SDL_Color backgroundColor)
     {
-        m_background_color = background_color;
+        mBackgroundColor = backgroundColor;
     }
 
 
-    //void Draw(std::shared_ptr<SDL_Window> sdlwindow);
-    void Draw(std::shared_ptr<SDL_Renderer> sdlrenderer);
+    //void Draw(std::shared_ptr<SDL_Window> sdlWindow);
+    void draw(std::shared_ptr<SDL_Renderer> sdlrenderer);
         // probably can't be const
 
-    void Draw_PixelSize(
+    void drawPixelSize(
         std::shared_ptr<SDL_Renderer> sdlrenderer);
     // maybe can be const since sdlrenderer is the non-const object?
 
     // Same as above but prints to stdout TODO
-    void Print(std::ostream &os);
+    void print(std::ostream &os);
 
 
-    void SetFont(std::shared_ptr<SDLFontTexture> sdlfonttexture);
+    void setFont(std::shared_ptr<SDLFontTexture> sdlfonttexture);
 
 
-    std::string GetBuffer() const
+    std::string getBuffer() const
     {
-        return m_text;
+        return mText;
     }
 
-    void SetSizePixels(const int size_pixels_x, const int size_pixels_y);
+    void setSizePixels(const int sizePixelsX, const int sizePixelsY);
 
     // sets size to zero and clears buffer
     // note this function is a bit weird because it sets the size
@@ -251,25 +213,25 @@ class TextGrid
     /*
     void Clear(unsigned int size_x, unsigned int size_y)
     {
-        m_size_x = size_x;
-        m_size_y = size_y;
+        mSizeX = size_x;
+        mSizeY = size_y;
         fill();
     }
     */
 
-    void Clear();
+    void clear();
 
     // silently ignores out of bounds character put request
-    void Put(unsigned int x, unsigned int y, char c)
+    void put(unsigned int x, unsigned int y, char c)
     {
-        if(y < m_size_y)
+        if(y < mSizeY)
         {
-            if(x < m_size_x)
+            if(x < mSizeX)
             {
                 //std::cout << "index(" << x << "," << y << ")=" << index(x, y) << std::endl;
-                m_text[index(x, y)] = c;
+                mText[index(x, y)] = c;
 
-                //std::cout << "m_text[" << x << "," << y << "]=" << c << std::endl;
+                //std::cout << "mText[" << x << "," << y << "]=" << c << std::endl;
             }
         }
         //std::cin.get();
@@ -277,29 +239,29 @@ class TextGrid
     }
 
     // wrapping/non-wrapping PutString function
-    void PutString(unsigned int x, unsigned int y, std::string s, bool wrap = true)
+    void putString(unsigned int x, unsigned int y, std::string s, bool wrap = true)
     {
         //std::cout << __func__ << " s=" << s << std::endl;
         if(wrap)
         {
-            put_string_wrap(x, y, s);
+            putStringWrap(x, y, s);
         }
         else
         {
-            put_string_no_wrap(x, y, s);
+            putStringNoWrap(x, y, s);
         }
     }
 
     // will throw an error if out of bounds
-    void Get(unsigned int x, unsigned int y, char &c) const
+    void get(unsigned int x, unsigned int y, char &c) const
     {
-        if((x >= m_size_x) || (y >= m_size_y))
+        if((x >= mSizeX) || (y >= mSizeY))
         {
             std::string emsg(std::string("Error: index out of bounds in function ") + std::string(__func__));
             throw emsg;
             // TODO: do not throw instance of std string
         }
-        c = m_text[index(x, y)];
+        c = mText[index(x, y)];
     }
 
 
@@ -307,14 +269,14 @@ class TextGrid
 
     unsigned int index(unsigned int x, unsigned int y) const
     {
-        return (y * m_size_x + x);
+        return (y * mSizeX + x);
     }
 
     // will increment beyond bounds of array
     void increment(unsigned int &x, unsigned int &y) const
     {
         ++ x;
-        if(x >= m_size_x)
+        if(x >= mSizeX)
         {
             x = 0;
             ++ y;
@@ -325,16 +287,16 @@ class TextGrid
     void fill();
 
     // non-wrapping PutString function
-    void put_string_no_wrap(unsigned int x, unsigned int y, std::string s)
+    void putStringNoWrap(unsigned int x, unsigned int y, std::string s)
     {
-        unsigned int pos_x = x;
-        const unsigned int pos_y = y;
+        unsigned int posX = x;
+        const unsigned int posY = y;
         for(auto it{s.cbegin()}; it != s.cend(); ++ it)
         {
             char c = *it;
-            Put(pos_x, pos_y, c);
+            Put(posX, posY, c);
             ++ x;
-            if(x >= m_size_x)
+            if(x >= mSizeX)
             {
                 break;
             }
@@ -344,21 +306,21 @@ class TextGrid
     // TODO: I don't think this function works correctly
 
     // wrapping PutString function
-    void put_string_wrap(unsigned int x, unsigned int y, std::string s)
+    void putStringWrap(unsigned int x, unsigned int y, std::string s)
     {
         //std::cout << __func__ << std::endl;
 
-        unsigned int pos_x = x;
-        unsigned int pos_y = y;
+        unsigned int posX = x;
+        unsigned int posY = y;
         for(auto it{s.cbegin()}; it != s.cend(); ++ it)
         {
             char c = *it;
 
-            //std::cout << "Put(" << pos_x << "," << pos_y << "," << c << ")" << std::endl;
+            //std::cout << "Put(" << posX << "," << posY << "," << c << ")" << std::endl;
 
-            Put(pos_x, pos_y, c);
-            increment(pos_x, pos_y);
-            if(y >= m_size_y)
+            Put(posX, posY, c);
+            increment(posX, posY);
+            if(y >= mSizeY)
             {
                 break;
             }
@@ -366,57 +328,59 @@ class TextGrid
     }
 
     // TODO: implement these ?
-    void draw_char_anywhere(
-        std::shared_ptr<SDL_Window> sdlwindow,
+    void drawCharAnywhere(
+        std::shared_ptr<SDL_Window> sdlWindow,
         const char c,
         const int x, const int y);
 
     // this function cannot be easily implemented because it
     // requires knowing the advance of each character which had been
     // printed before it on the same line
-    void draw_char(
-        std::shared_ptr<SDL_Window> sdlwindow,
+    void drawChar(
+        std::shared_ptr<SDL_Window> sdlWindow,
         const char c,
-        const unsigned int pos_x,
-        const unsigned int pos_y);
+        const unsigned int posX,
+        const unsigned int posY);
 
 
-    private:
+private:
 
     // size in number of characters
     // makes more sense for monospace fonts
     // scales with font size
-    // these are being depreciated
-    unsigned int m_size_x;
-    unsigned int m_size_y;
+    // these are being deprecated
+    unsigned int mSizeX;
+    unsigned int mSizeY;
 
     // size in pixels
     // makes sense for both monospace and
     // variable width fonts
     // does not scale with font size, independent of font size
-    // these are replacing m_size_x and m_size_y
-    int m_size_pixels_x;
-    int m_size_pixels_y;
+    // these are replacing mSizeX and mSizeY
+    int mSizePixelsX;
+    int mSizePixelsY;
 
     // this class needs to store the font line skip (character size y)
     // and widest character advance (character size x)
     // this is to calculate the size x and y from the pixel size x and y
-    int m_character_size_x;
-    int m_character_size_y;
+    int mCharacterSizeX;
+    int mCharacterSizeY;
 
-    std::shared_ptr<SDLFontTexture> m_sdlfonttexture;
+    // Should not need to store this?
+    std::shared_ptr<SDLFontTexture> mFontTexture;
 
-    std::string m_text;
+    std::string mText;
 
-    SDL_Color m_background_color;
+    // Should not contain any drawing code
+    SDL_Color mBackgroundColor;
 
     // Note: could inherit and create a new class which has cursors,
     // but for now we simply insert cursor variables and logic into
     // this monolithic class
     // TODO: initialize in class constructor and add setter function for cursortype
-    cursortype_t m_cursortype;
-    unsigned int m_cursor_pos_x;
-    unsigned int m_cursor_pos_y;
+    cursortype_t mCursorType;
+    unsigned int mCursorPosX;
+    unsigned int mCursorPosY;
 
     // in order for the cursor logic to work, we need to remember the size
     // of each line in the grid.
@@ -424,9 +388,9 @@ class TextGrid
     // are just blank spaces by default
     // should perhaps solve this by making the cursor a member of the text
     // buffer class?
-    // or creating a new class which holds the textgrid data, but as individual
-    // lines, and this class can then render the textgrid by creating a new
-    // object from the class used to hold the textgrid data?
+    // or creating a new class which holds the textArea data, but as individual
+    // lines, and this class can then render the textArea by creating a new
+    // object from the class used to hold the textArea data?
 
 };
 
@@ -441,11 +405,11 @@ class TextGrid
 
 
 #if 0
-void TextGrid::Draw(std::shared_ptr<SDL_Window> sdlwindow)
+void TextArea::Draw(std::shared_ptr<SDL_Window> sdlWindow)
 {
 
     // TODO: what is the best way to do this with smart pointer?
-    SDL_Renderer *renderer = sdlwindow->GetRenderer();
+    SDL_Renderer *renderer = sdlWindow->GetRenderer();
     // TODO: is this different to my code in main() of Text-Graphics-Lib
 
     // rendering code copied from other project
@@ -567,4 +531,4 @@ void TextGrid::Draw(std::shared_ptr<SDL_Window> sdlwindow)
 
 
 
-#endif // TEXTGRID_HPP
+#endif // TEXTAREA_H
